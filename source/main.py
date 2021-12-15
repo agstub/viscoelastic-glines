@@ -49,7 +49,7 @@ P_res = np.zeros(nt)              # Penalty functional residual
 t = 0                             # time
 
 W_stress = TensorFunctionSpace(mesh,"CG",1) # functionspace for dev. stress tensor
-tau = Function(W_stress)                    # initial deviatoric stress tensor
+tau = Function(W_stress)                    # initial deviatoric stress tensor (zero)
 
 # Begin time stepping
 for i in range(nt):

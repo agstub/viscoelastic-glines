@@ -76,13 +76,12 @@ def stokes_solve(mesh,F_h,t,w,tau_prev):
 
         bcs_u =  apply_bcs(W,boundary_markers)    # Apply Dirichlet BC
 
-
         # Solve for (u,p).
         Fw = weak_form(u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev)
 
-
         solve(Fw == 0, w, bcs=bcs_u,solver_parameters={"newton_solver":{"relative_tolerance": 1e-14,"maximum_iterations":200}},form_compiler_parameters={"quadrature_degree":quad_degree,"optimize":True,"eliminate_zeros":False})
 
+        # compute deviatoric stress tensor for use in next time step
         tau = compute_stress(w,W_vel,W_stress,tau_prev)
 
         # Compute penalty functional residiual
