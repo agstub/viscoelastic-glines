@@ -125,7 +125,7 @@ def get_baseslope(w,mesh):
     V = FunctionSpace(mesh,'CG',1)
     Phi_s = ExpressionPhi_s(element=V.ufl_element(),domain=mesh)
 
-    U,p = w.split()
+    U,p,tau = w.split()
 
     sx = Dx(Phi_s,0)
     baseslope = Function(V)
@@ -171,7 +171,7 @@ def get_surfslope(w,mesh):
     V = FunctionSpace(mesh,'CG',1)
     Phi_h = ExpressionPhi_h(element=V.ufl_element(),domain=mesh)
 
-    U,p = w.split()
+    U,p,tau = w.split()
 
     hx = Dx(Phi_h,0)
     surfslope = Function(V)

@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
-# This program solves a linear small-deformation Maxwell viscoelasticy problem
-# with grounding line migration (constant Newtonian viscosity)
+# This program solves an upper-convected Maxwell viscoelasticity problem
+# with grounding line migration (with Glen's law viscosity)
 #-------------------------------------------------------------------------------
 import sys
 sys.path.insert(0, './scripts')
@@ -8,7 +8,7 @@ sys.path.insert(0, './scripts')
 from dolfin import *
 import matplotlib.pyplot as plt
 import numpy as np
-from stokes import stokes_solve,get_zero_m
+from maxwell import maxwell_solve,get_zero_m
 from geometry import interface,bed
 from meshfcns import mesh_routine
 import os
@@ -70,7 +70,7 @@ for i in range(nt):
 
     # Solve the Stoke problem.
     # Returns solutions "w" and penalty functional residual "Perr_i"
-    w,P_res_i,tau = stokes_solve(mesh,F_h,t,w,tau)
+    w,P_res_i,tau = maxwell_solve(mesh,F_h,t,w,tau)
 
     # Solve the surface kinematic equations, move the mesh, and compute the
     # grounding line positions.
@@ -87,7 +87,7 @@ for i in range(nt):
 
     # Save (u,p) solution for viewing in Paraview.
     # Save Stokes solution
-    _u, _p = w.split()
+    _u, _p,_tau = w.split()
     _u.rename("vel", "U")
     _p.rename("press","P")
     vtkfile_u << (_u,t)

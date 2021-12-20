@@ -75,6 +75,7 @@ def mark_boundary(mesh):
 def apply_bcs(W,boundary_markers):
     # Apply inflow and outflow boundary conditions to the system.
     # These are applied to the horizontal velocity component.
+
     bcu1 = DirichletBC(W.sub(0).sub(0), Constant(U0), boundary_markers,1)
 
     BC = [bcu1]
