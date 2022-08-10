@@ -2,17 +2,13 @@
 import numpy as np
 #-------------------------------------------------------------------------------
 #-----------------------------MODEL OPTIONS-------------------------------------
-
-# Turn the tidal cycle 'on' or 'off'.
-tides = 'off'
-
 # Turn 'on' or 'off' real-time plotting that saves a png figure called 'surfs' at
 # each time step of the free surface geometry.
 
 realtime_plot = 'on'
 
 # Turn 'on' or 'off' Newton convergence information:
-print_convergence = 'on'
+print_convergence = 'off'
 
 #-----------------------------MODEL PARAMETERS----------------------------------
 #-------------------------------------------------------------------------------
@@ -31,13 +27,13 @@ G = E/(2*(1+nu))                   # Shear modulus
 rho_i = 917.0                      # Density of ice
 rho_w = 1000.0                     # Density of water
 g = 9.81                           # Gravitational acceleration
-C = 2.0e8                          # Sliding law friction coefficient
+C = 1.0e8                          # Sliding law friction coefficient
 
 # Numerical parameters
 eta0 = 1e13                        # viscosity at zero deviatoric stress
 
 eps_v = (2*A0*eta0)**(1/((1.-n)/2.))    # Flow law regularization parameter
-eps_p = 1.0e-13                    # Penalty method parameter
+eps_p = 1.0e-12                    # Penalty method parameter
 quad_degree = 16                   # Quadrature degree for weak forms
 tol = 1.0e-2                       # Numerical tolerance for boundary geometry:
                                    # s(x,t) - b(x) > tol on ice-water boundary,
@@ -57,13 +53,8 @@ Nx = int(Lngth/250)               # Number of elements in x direction
 Nz = int(Hght0/250)               # Number of elements in z direction
 
 # Time-stepping parameters
-if tides == 'off':
-    nt_per_year = 2000             # Number of timesteps per year.
-    t_final = 0.5*3.154e7         # Final time (yr*sec_per_year).
-elif tides == 'on':
-    nt_per_year = 100*1000         # Number of timesteps per year.
-    t_final = 0.003*3.154e7        # Final time (yr*sec_per_year).
-
+nt_per_year = 100*1000         # Number of timesteps per year.
+t_final = 0.001*3.154e7        # Final time (yr*sec_per_year).
 
 nt = int(nt_per_year*t_final/3.154e7) # Number of time steps
 dt = t_final/nt                       # Timestep size

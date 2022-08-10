@@ -9,7 +9,7 @@ from params import tol,Lngth,Hght,realtime_plot,X_fine
 from dolfin import *
 import matplotlib.pyplot as plt
 import numpy as np
-from geometry import bed,interface
+from geometry import bed,interface,elevation0
 from scipy.interpolate import interp1d
 
 # ------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def move_mesh(mesh,baseslope,surfslope,dt,F_s,F_h,w):
             M[i,1] += dt*disp1[i]
 
     # Smooth the interior nodes of the mesh
-    mesh.smooth()
+    mesh.smooth(10)
 
 #------------------------------------------------------------------------------
 
@@ -222,43 +222,27 @@ def plot_surfaces(F_h,F_s,XL,XR):
     # Save a .png figure called 'surfaces' of the free surface geometry!
     if realtime_plot == 'on':
         X = X_fine
-        Gamma_h = F_h(X)
-        Gamma_s = F_s(X)
+
+        delta_s = F_s(X) - interface(X)
+        delta_h = F_h(X) - elevation0(X)
+
+        X0 = X/1000-0.5*Lngth/1000
 
         plt.figure(figsize=(8,6))
 
-        # Plot upper surface
-        plt.subplot(211)
-        plt.plot(X/1000-0.5*Lngth/1000,Gamma_h[:]-0.98*Hght,color='royalblue',linewidth=2,label=r'$h-0.98h_0$')
+        plt.plot(X0, delta_h+2,color='royalblue',linewidth=2,label=r'$\Delta h + 2$')
+        plt.plot(X0[F_s(X)-bed(X)>tol], delta_s[F_s(X)-bed(X)>tol],color='crimson',linewidth=2,label=r'$\Delta s$ (floating)')
+        plt.plot(X0[F_s(X)-bed(X)<=tol], delta_s[F_s(X)-bed(X)<=tol],color='k',linewidth=2,label=r'$\Delta s$ (grounded)')
 
-        # Plot ice, water, and bed domains; colored accordingly.
-        p1 = plt.fill_between(X/1000-0.5*Lngth/1000,y1=Gamma_s[:], y2=Gamma_h[:]-0.98*Hght,facecolor='aliceblue',alpha=1.0)
-        plt.ylim(0,0.1*Hght)
-        plt.xlim(-0.5*Lngth/1000,0.5*Lngth/1000)
-        plt.yticks(fontsize=16)
-        plt.gca().xaxis.set_ticklabels([])
-        plt.ylabel(r'$z$ (m)',fontsize=20)
-
-
-        plt.subplot(212)
-        p1 = plt.fill_between(X/1000-0.5*Lngth/1000,y1=Gamma_s[:], y2=0*Gamma_h[:]+100,facecolor='aliceblue',alpha=1.0)
-        p2 = plt.fill_between(X/1000-0.5*Lngth/1000,bed(X),Gamma_s[:],facecolor='slateblue',alpha=0.5)
-        p3 = plt.fill_between(X/1000-0.5*Lngth/1000,(np.min(bed(X))-4)*np.ones(np.size(X)),bed(X),facecolor='burlywood',alpha=1.0)
-
-        plt.subplot(212)
-        # Plot bed surface
-        plt.plot(X/1000-0.5*Lngth/1000,bed(X),color='k',linewidth=1,label=r'$\beta$')
-
-        # Plot ice-water surface
-        plt.plot(X[(Gamma_s[:]-bed(X)>tol)]/1000-0.5*Lngth/1000,Gamma_s[:][(Gamma_s[:]-bed(X)>tol)],'o',color='crimson',markersize=1)
+        p1 = plt.fill_between(X0,y1=delta_s, y2=delta_h+2,facecolor='aliceblue',alpha=1.0)
 
         # Label axes and save png:
         plt.xlabel(r'$x$ (km)',fontsize=20)
         plt.ylabel(r'$z$ (m)',fontsize=20)
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
-
-        plt.ylim(np.min(bed(X))-2.0,100)
+        plt.legend(fontsize=16,loc='lower left')
+        plt.ylim(-2,4)
         plt.xlim(-0.5*Lngth/1000,0.5*Lngth/1000)
         plt.tight_layout()
         plt.savefig('surfaces',bbox_inches='tight')

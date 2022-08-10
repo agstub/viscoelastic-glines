@@ -1,5 +1,5 @@
 # This file contains the functions needed for solving the upper-convected Maxwell problem.
-from params import rho_i,g,tol,rho_w,C,eps_p,eps_v,sea_level,dt,quad_degree,Lngth,n,A0,G,t_final,tides
+from params import rho_i,g,tol,rho_w,C,eps_p,eps_v,sea_level,dt,quad_degree,Lngth,n,A0,G,t_final
 from boundaryconds import mark_boundary,apply_bcs
 from tides import sl_change
 import numpy as np
@@ -32,19 +32,12 @@ def weak_form(tau,mu,u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev,t):
          + inner(tau + lamda(tau)*ucd(tau,tau_prev,u)-2*eta(tau)*sym(grad(u)),mu)*dx\
 
     F2 = + (g_base+Constant(rho_w*g*dt)*inner(u,nu))*inner(nu, v)*ds(4)\
-         + Constant(C)*inner(dot(T,u),dot(T,v))*ds(3)\
          + (g_base+Constant(rho_w*g*dt)*inner(u,nu))*inner(nu, v)*ds(3)\
-         + g_out*inner(nu, v)*ds(2)
-    if t<t_final/2 and tides=='off':
-        # bilateral condition:
-        # keep grounding line fixed for half of simulation time to construct
-        # initial geometry for tidal problem
-        F3 = Constant(1.0e5/eps_p)*inner(u,nu)*inner(v,nu)*ds(3)
-    else:
-        # unilateral condition:
-        # allow grounding line migration
-        F3 = Constant(1.0/eps_p)*dPi(u,nu)*inner(v,nu)*ds(3)
-    return F1+F2+F3
+         + Constant(C)*inner(dot(T,u),dot(T,v))*ds(3)\
+         + Constant(1.0/eps_p)*dPi(u,nu)*inner(v,nu)*ds(3)\
+         + g_out*inner(nu, v)*ds(2) - inner(dot(T, dot(tau,nu)),dot(T,v) )*ds(1)
+
+    return F1+F2
 
 def maxwell_solve(mesh,F_h,t,w,tau_prev):
         # Stokes solver using Taylor-Hood elements.
@@ -84,7 +77,7 @@ def maxwell_solve(mesh,F_h,t,w,tau_prev):
         # Solve for (u,p).
         Fw = weak_form(tau,mu,u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev,t)
 
-        solve(Fw == 0, w, bcs=bcs,solver_parameters={"newton_solver":{"relative_tolerance": 1e-14,"maximum_iterations":100}},form_compiler_parameters={"quadrature_degree":quad_degree,"optimize":True,"eliminate_zeros":False})
+        solve(Fw == 0, w, bcs=bcs,solver_parameters={"newton_solver":{"relative_tolerance": 1e-14,"maximum_iterations":50}},form_compiler_parameters={"quadrature_degree":quad_degree,"optimize":True,"eliminate_zeros":False})
 
         # compute deviatoric stress tensor for use in next time step
         W_stress = TensorFunctionSpace(mesh,"CG",1)

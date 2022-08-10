@@ -9,17 +9,14 @@ from dolfin import *
 import matplotlib.pyplot as plt
 import numpy as np
 from maxwell import maxwell_solve,get_zero_m
-from geometry import interface,bed
+from geometry import interface,bed,elevation0
 from meshfcns import mesh_routine
 import os
 from params import (rho_i,g,tol,t_final,nt_per_year,Lngth,Hght,nt,dt,
-                    print_convergence,X_fine,nx,tides,Nx,Nz)
+                    print_convergence,X_fine,nx,Nx,Nz)
 
 if os.path.isdir('results')==False:
     os.mkdir('results')   # Make a directory for the results.
-
-if os.path.isdir('meshes')==False:
-    os.mkdir('meshes')   # Make a directory for the tide simulation mesh.
 
 if print_convergence == 'off':
     set_log_level(40)    # Suppress Newton convergence information if desired.
@@ -29,32 +26,20 @@ vtkfile_u = File('results/stokes/u.pvd')
 vtkfile_p = File('results/stokes/p.pvd')
 
 # Load mesh
-if tides=='on':
-    meshname = 'tides.xml'
-    mesh = Mesh('./meshes/tides.xml')
-elif tides=='off':
-    p0 = Point((0.0,0.0))
-    p1 = Point((Lngth,Hght))
-    mesh = RectangleMesh(p0,p1, Nx, Nz,diagonal="right")
-    M = mesh.coordinates()
+p0 = Point((0.0,0.0))
+p1 = Point((Lngth,Hght))
+mesh = RectangleMesh(p0,p1, Nx, Nz,diagonal="right")
+M = mesh.coordinates()
 
-    # make sure all vertices are bounded below by the bed elevation
-    M[:,1][M[:,1]<0.5*Hght/Nz] = interface(M[:,0][M[:,1]<0.5*Hght/Nz])
-    mesh.smooth(100)
-    # Create initial mesh for tides simulation by running the marine model with
-    # tides turned off.
-    new_mesh = File('./meshes/tides.xml')
-    new_mesh << mesh
-
-    pvd = File('mesh.pvd')
-    pvd << mesh
+# make sure all vertices are bounded below by the bed elevation
+M[:,1][M[:,1]<0.5*Hght/Nz] = interface(M[:,0][M[:,1]<0.5*Hght/Nz])
+M[:,1][np.abs(M[:,1]-Hght)<0.5*Hght/Nz] = elevation0(M[:,0][np.abs(M[:,1]-Hght)<0.5*Hght/Nz])
+mesh.smooth(100)
 
 # Define arrays for saving surfaces, lake volume, water pressure, and
 # grounding line positions over time.
 Gamma_s = np.zeros((nx,nt))       # Basal surface
 Gamma_h = np.zeros((nx,nt))       # Upper surface
-s_mean = np.zeros(nt)             # Mean elevation of ice-water interface
-h_mean = np.zeros(nt)             # Mean elevation of surface above ice-water interface
 x_left = np.zeros(nt)             # Left grounding line position
 x_right = np.zeros(nt)            # Right grounding line position
 P_res = np.zeros(nt)              # Penalty functional residual
@@ -91,8 +76,6 @@ for i in range(nt):
 
     # Save quantities of interest.
     P_res[i] = P_res_i
-    s_mean[i] = s_mean_i
-    h_mean[i] = h_mean_i
     x_left[i] = XL
     x_right[i] = XR
     Gamma_s[:,i] = F_s(X_fine)
@@ -114,14 +97,8 @@ t_arr = np.linspace(0,t_final,num=int(nt_per_year*t_final/3.154e7))
 
 np.savetxt('results/Gamma_s',Gamma_s)
 np.savetxt('results/Gamma_h',Gamma_h)
-np.savetxt('results/s_mean',s_mean)
-np.savetxt('results/h_mean',h_mean)
 np.savetxt('results/x_left',x_left)
 np.savetxt('results/x_right',x_right)
 np.savetxt('results/P_res',P_res)
 np.savetxt('results/X',X_fine)           # X = spatial coordinate
 np.savetxt('results/t',t_arr)            # t = time coordinate
-
-
-if tides=='off':
-    new_mesh << mesh
