@@ -4,7 +4,7 @@ import numpy as np
 #-----------------------------MODEL OPTIONS-------------------------------------
 
 # Turn the tidal cycle 'on' or 'off'.
-tides = 'on'
+tides = 'off'
 
 # Turn 'on' or 'off' real-time plotting that saves a png figure called 'surfs' at
 # each time step of the free surface geometry.
@@ -13,13 +13,6 @@ realtime_plot = 'on'
 
 # Turn 'on' or 'off' Newton convergence information:
 print_convergence = 'on'
-
-# Mesh resolution at the lower boundary
-DX_s = 100.0                  # Element width at lower boundary (in meters)
-                              # This is used for (1) setting the element width in
-                              # gendomain.py and (2) selecting the mesh in main.py.
-
-DX_h = 250.0                  # Element width at the upper surface (in meters)
 
 #-----------------------------MODEL PARAMETERS----------------------------------
 #-------------------------------------------------------------------------------
@@ -38,30 +31,35 @@ G = E/(2*(1+nu))                   # Shear modulus
 rho_i = 917.0                      # Density of ice
 rho_w = 1000.0                     # Density of water
 g = 9.81                           # Gravitational acceleration
-C = 1.0e8                          # Sliding law friction coefficient
+C = 2.0e8                          # Sliding law friction coefficient
 
 # Numerical parameters
 eta0 = 1e13                        # viscosity at zero deviatoric stress
 
-eps_v = (2*A0*eta0)**(2/(1-n))     # Flow law regularization parameter
-eps_p = 1.0e-12                    # Penalty method parameter
+eps_v = (2*A0*eta0)**(1/((1.-n)/2.))    # Flow law regularization parameter
+eps_p = 1.0e-13                    # Penalty method parameter
 quad_degree = 16                   # Quadrature degree for weak forms
-
 tol = 1.0e-2                       # Numerical tolerance for boundary geometry:
                                    # s(x,t) - b(x) > tol on ice-water boundary,
                                    # s(x,t) - b(x) <= tol on ice-bed boundary.
 
 # Geometry parameters
-Lngth = 20*1000.0                  # Length of the domain
+Lngth = 40*1000.0                  # Length of the domain
 Hght = 500.0                       # (Initial) Height of the domain
 
-sea_level = Hght*(917.0/1000.0)    # Sea level elevation.
+sea_level = Hght*(rho_i/rho_w)     # Sea level elevation.
                                    # (Initial sea level for the tides problem)
+
+Hght0 = Hght+600                   # estimate of thickness at inflow
+
+Nx = int(Lngth/250)               # Number of elements in x direction
+
+Nz = int(Hght0/250)               # Number of elements in z direction
 
 # Time-stepping parameters
 if tides == 'off':
     nt_per_year = 2000             # Number of timesteps per year.
-    t_final = 0.15*3.154e7         # Final time (yr*sec_per_year).
+    t_final = 0.5*3.154e7         # Final time (yr*sec_per_year).
 elif tides == 'on':
     nt_per_year = 100*1000         # Number of timesteps per year.
     t_final = 0.003*3.154e7        # Final time (yr*sec_per_year).

@@ -228,13 +228,24 @@ def plot_surfaces(F_h,F_s,XL,XR):
         plt.figure(figsize=(8,6))
 
         # Plot upper surface
-        plt.plot(X/1000-0.5*Lngth/1000,Gamma_h[:]-0.98*Hght,color='royalblue',linewidth=1,label=r'$h-0.98h_0$')
+        plt.subplot(211)
+        plt.plot(X/1000-0.5*Lngth/1000,Gamma_h[:]-0.98*Hght,color='royalblue',linewidth=2,label=r'$h-0.98h_0$')
 
         # Plot ice, water, and bed domains; colored accordingly.
         p1 = plt.fill_between(X/1000-0.5*Lngth/1000,y1=Gamma_s[:], y2=Gamma_h[:]-0.98*Hght,facecolor='aliceblue',alpha=1.0)
-        p2 = plt.fill_between(X/1000-0.5*Lngth/1000,bed(X),Gamma_s[:],facecolor='slateblue',alpha=0.5)
-        p3 = plt.fill_between(X/1000-0.5*Lngth/1000,-18*np.ones(np.size(X)),bed(X),facecolor='burlywood',alpha=1.0)
+        plt.ylim(0,0.1*Hght)
+        plt.xlim(-0.5*Lngth/1000,0.5*Lngth/1000)
+        plt.yticks(fontsize=16)
+        plt.gca().xaxis.set_ticklabels([])
+        plt.ylabel(r'$z$ (m)',fontsize=20)
 
+
+        plt.subplot(212)
+        p1 = plt.fill_between(X/1000-0.5*Lngth/1000,y1=Gamma_s[:], y2=0*Gamma_h[:]+100,facecolor='aliceblue',alpha=1.0)
+        p2 = plt.fill_between(X/1000-0.5*Lngth/1000,bed(X),Gamma_s[:],facecolor='slateblue',alpha=0.5)
+        p3 = plt.fill_between(X/1000-0.5*Lngth/1000,(np.min(bed(X))-4)*np.ones(np.size(X)),bed(X),facecolor='burlywood',alpha=1.0)
+
+        plt.subplot(212)
         # Plot bed surface
         plt.plot(X/1000-0.5*Lngth/1000,bed(X),color='k',linewidth=1,label=r'$\beta$')
 
@@ -247,7 +258,7 @@ def plot_surfaces(F_h,F_s,XL,XR):
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
 
-        plt.ylim(np.min(bed(X))-2.0,0.03*Hght,8)
+        plt.ylim(np.min(bed(X))-2.0,100)
         plt.xlim(-0.5*Lngth/1000,0.5*Lngth/1000)
         plt.tight_layout()
         plt.savefig('surfaces',bbox_inches='tight')

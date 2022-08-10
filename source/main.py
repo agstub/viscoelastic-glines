@@ -13,10 +13,13 @@ from geometry import interface,bed
 from meshfcns import mesh_routine
 import os
 from params import (rho_i,g,tol,t_final,nt_per_year,Lngth,Hght,nt,dt,
-                    print_convergence,X_fine,nx,tides,DX_s)
+                    print_convergence,X_fine,nx,tides,Nx,Nz)
 
 if os.path.isdir('results')==False:
     os.mkdir('results')   # Make a directory for the results.
+
+if os.path.isdir('meshes')==False:
+    os.mkdir('meshes')   # Make a directory for the tide simulation mesh.
 
 if print_convergence == 'off':
     set_log_level(40)    # Suppress Newton convergence information if desired.
@@ -27,14 +30,24 @@ vtkfile_p = File('results/stokes/p.pvd')
 
 # Load mesh
 if tides=='on':
-    meshname = 'tides'+'_DX'+str(int(DX_s))+'.xml'
+    meshname = 'tides.xml'
+    mesh = Mesh('./meshes/tides.xml')
 elif tides=='off':
-    meshname = 'marine'+'_DX'+str(int(DX_s))+'.xml'
+    p0 = Point((0.0,0.0))
+    p1 = Point((Lngth,Hght))
+    mesh = RectangleMesh(p0,p1, Nx, Nz,diagonal="right")
+    M = mesh.coordinates()
+
+    # make sure all vertices are bounded below by the bed elevation
+    M[:,1][M[:,1]<0.5*Hght/Nz] = interface(M[:,0][M[:,1]<0.5*Hght/Nz])
+    mesh.smooth(100)
     # Create initial mesh for tides simulation by running the marine model with
     # tides turned off.
-    new_mesh = File('./meshes/tides_DX'+str(int(DX_s))+'.xml')
+    new_mesh = File('./meshes/tides.xml')
+    new_mesh << mesh
 
-mesh = Mesh('./meshes/'+meshname)
+    pvd = File('mesh.pvd')
+    pvd << mesh
 
 # Define arrays for saving surfaces, lake volume, water pressure, and
 # grounding line positions over time.
@@ -59,8 +72,8 @@ for i in range(nt):
 
     if t==0:
         # Set initial conditions.
-        F_h = lambda x: Hght                  # Ice-air surface function
-        F_s = lambda x: interface(x)    # Lower surface function
+        F_h = lambda x: Hght              # Ice-air surface function
+        F_s = lambda x: interface(x)      # Lower surface function
 
         w = get_zero_m(mesh)              # Placeholder for first iteration.
 
