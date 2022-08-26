@@ -231,7 +231,7 @@ def plot_surfaces(F_h,F_s,XL,XR):
         plt.figure(figsize=(8,6))
 
         plt.plot(X0, delta_h+2,color='royalblue',linewidth=2,label=r'$\Delta h + 2$')
-        plt.plot(X0[F_s(X)-bed(X)>tol], delta_s[F_s(X)-bed(X)>tol],color='crimson',linewidth=2,label=r'$\Delta s$ (floating)')
+        plt.plot(X0[F_s(X)-bed(X)>tol], delta_s[F_s(X)-bed(X)>tol],'o',markersize=3,color='crimson',label=r'$\Delta s$ (floating)')
         plt.plot(X0[F_s(X)-bed(X)<=tol], delta_s[F_s(X)-bed(X)<=tol],color='k',linewidth=2,label=r'$\Delta s$ (grounded)')
 
         p1 = plt.fill_between(X0,y1=delta_s, y2=delta_h+2,facecolor='aliceblue',alpha=1.0)

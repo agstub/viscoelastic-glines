@@ -10,12 +10,12 @@ from params import Lngth,Hght,rho_w,rho_i
 
 #-------------------- Generate Bed Topography-----------------------------------
 def bed(x):
-    Bed = -np.abs(600*x/(0.5*Lngth) - 600)
+    Bed = 100*np.sin(np.pi * x / Lngth)-100
     return Bed
 
 #------------------Generate initial ice-water/ice-bed interface-----------------
 def interface(x):
-    Int = 0.5 * bed(x + 0.5*Lngth*bed(x)/600)
+    Int = bed(x)*(1-np.heaviside(x-Lngth/2, 1))
     return Int
 #-------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ def interface(x):
 
 def elevation0(x):
     fl = (rho_w / rho_i-1)
-    el = Hght-1.1*fl*interface(x)
+    el = Hght-2*fl*interface(x)
     return el
 
 import matplotlib.pyplot as plt

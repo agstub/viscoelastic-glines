@@ -1,6 +1,6 @@
 # This file contains the functions needed for solving the upper-convected Maxwell problem.
 from params import rho_i,g,tol,rho_w,C,eps_p,eps_v,sea_level,dt,quad_degree,Lngth,n,A0,G,t_final
-from boundaryconds import mark_boundary,apply_bcs
+from boundaryconds import mark_boundary
 from tides import sl_change
 import numpy as np
 from dolfin import *
@@ -26,7 +26,7 @@ def ucd(tau,tau_prev,u):
         # upper-convected time derivative
         return ((tau-tau_prev)/dt + dot(u,nabla_grad(tau)) - dot(grad(u),tau)-dot(tau,grad(u).T))
 
-def weak_form(tau,mu,u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev,t):
+def weak_form(tau,mu,u,p,v,q,f,g_base,g_out,g_in,ds,nu,T,tau_prev,t):
     # Weak form of the residual equations
     F1 =  inner(tau,grad(v))*dx + (- div(v)*p + q*div(u))*dx - inner(f, v)*dx \
          + inner(tau + lamda(tau)*ucd(tau,tau_prev,u)-2*eta(tau)*sym(grad(u)),mu)*dx\
@@ -35,7 +35,7 @@ def weak_form(tau,mu,u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev,t):
          + (g_base+Constant(rho_w*g*dt)*inner(u,nu))*inner(nu, v)*ds(3)\
          + Constant(C)*inner(dot(T,u),dot(T,v))*ds(3)\
          + Constant(1.0/eps_p)*dPi(u,nu)*inner(v,nu)*ds(3)\
-         + g_out*inner(nu, v)*ds(2) - inner(dot(T, dot(tau,nu)),dot(T,v) )*ds(1)
+         + g_out*inner(nu, v)*ds(2) + g_in*inner(nu, v)*ds(1)
 
     return F1+F2
 
@@ -56,7 +56,10 @@ def maxwell_solve(mesh,F_h,t,w,tau_prev):
 
         # Neumann condition at outflow boundary
         h_out = float(F_h(Lngth))        # Surface elevation at outflow boundary
+        h_in = float(F_h(0))             # Surface elevation at inflow boundary
+
         g_out = Expression('rho_i*g*(h_out-x[1])',rho_i=rho_i,g=g,h_out=h_out,degree=1)
+        g_in = Expression('rho_i*g*(h_in-x[1])',rho_i=rho_i,g=g,h_in=h_in,degree=1)
 
         # Neumann condition at ice-water boundary
         g_base = Expression('rho_w*g*(sea_level-x[1])',rho_w=rho_w,g=g,sea_level=sea_level+sl_change(t),degree=1)
@@ -70,14 +73,12 @@ def maxwell_solve(mesh,F_h,t,w,tau_prev):
         boundary_markers= mark_boundary(mesh)
         ds = Measure('ds', domain=mesh, subdomain_data=boundary_markers)
 
-        # Define weak form and apply boundary conditions on the inflow boundary
+        # Define weak form
 
-        bcs =  apply_bcs(W,boundary_markers)    # Apply Dirichlet BC
+        Fw = weak_form(tau,mu,u,p,v,q,f,g_base,g_out,g_in,ds,nu,T,tau_prev,t)
 
-        # Solve for (u,p).
-        Fw = weak_form(tau,mu,u,p,v,q,f,g_base,g_out,ds,nu,T,tau_prev,t)
-
-        solve(Fw == 0, w, bcs=bcs,solver_parameters={"newton_solver":{"relative_tolerance": 1e-14,"maximum_iterations":50}},form_compiler_parameters={"quadrature_degree":quad_degree,"optimize":True,"eliminate_zeros":False})
+        # Solve the problem
+        solve(Fw == 0, w, bcs=[],solver_parameters={"newton_solver":{"relative_tolerance": 1e-13,"maximum_iterations":100}},form_compiler_parameters={"quadrature_degree":quad_degree,"optimize":True,"eliminate_zeros":False})
 
         # compute deviatoric stress tensor for use in next time step
         W_stress = TensorFunctionSpace(mesh,"CG",1)
