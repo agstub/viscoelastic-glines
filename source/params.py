@@ -34,7 +34,7 @@ eta0 = 1e13                        # viscosity at zero deviatoric stress
 eps_v = (2*A0*eta0)**(1/((1.-n)/2.))    # Flow law regularization parameter
 
 
-eps_p = 1.0e-11                    # Penalty method parameter
+eps_p = 1.0e-12                    # Penalty method parameter
 quad_degree = 16                   # Quadrature degree for weak forms
 tol = 1.0e-2                       # Numerical tolerance for boundary geometry:
                                    # s(x,t) - b(x) > tol on ice-water boundary,
