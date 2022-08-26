@@ -63,8 +63,3 @@ dt = t_final/nt                       # Timestep size
 nx = 1000
 X_fine = np.linspace(0,Lngth,num=nx)  # Horizontal coordinate for computing surface
                                       # slopes and plotting.
-
-# Set inflow speed boundary condition for marine ice sheet problem
-U0   = 1000.0/3.154e7                 # Inflow speed 1 km/yr
-
-#-------------------------------------------------------------------------------
